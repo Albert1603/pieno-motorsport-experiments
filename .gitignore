@@ -1,0 +1,21 @@
+# Secrets
+.env
+*.token
+discord_token.txt
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build/Temp
+dist/
+build/
+temp/
+*.log
