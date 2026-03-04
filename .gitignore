@@ -14,9 +14,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Paid/proprietary setup files
-*.svm
-
 # Build/Temp
 dist/
 build/
