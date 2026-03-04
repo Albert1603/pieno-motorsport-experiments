@@ -19,3 +19,6 @@ dist/
 build/
 temp/
 *.log
+
+# Session data
+race-engineer/sessions/

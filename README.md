@@ -4,7 +4,9 @@ A collection of tools for sim racing data analysis and AI-assisted race engineer
 
 ## Repository Structure
 
-- `discord-bot/` — A Node.js Discord bot that uses the **Gemini CLI** as a virtual race engineer.
+- `race-engineer/` — AI race engineer powered by the **Gemini CLI**, with Discord and CLI interfaces.
+  - `index.js` — Single entry point (runs Discord bot + interactive CLI together).
+  - `core/engine.js` — Shared AI engine (Gemini CLI wrapper, prompt builder).
 - `tools/` — Python CLI scripts and Windows utilities.
   - `motec.py` — MoTeC .ld telemetry reader (metadata, channels, data with downsampling).
   - `lmu_setup.py` — LMU .svm setup file parser and writer.
@@ -31,7 +33,7 @@ python tools/lmu_setup.py read <file.svm>
 python tools/lmu_setup.py write <file.svm> '<json_data>'
 ```
 
-### Discord Bot
+### Race Engineer
 
 **Prerequisites:**
 - Node.js 18+
@@ -39,10 +41,17 @@ python tools/lmu_setup.py write <file.svm> '<json_data>'
 - A `GOOGLE_API_KEY` environment variable (or Gemini CLI configured with credentials)
 
 **Installation:**
-1. `cd discord-bot`
+1. `cd race-engineer`
 2. `npm install`
 3. Copy `.env.example` to `.env` and add your `DISCORD_TOKEN` and `GOOGLE_API_KEY`.
-4. Start with `npm start`.
+
+**Start (Discord bot + interactive CLI):**
+```bash
+npm start
+
+# With telemetry/setup files preloaded for the CLI:
+node index.js ../telemetry-samples/*.ld
+```
 
 ## Security
 
