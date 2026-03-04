@@ -4,7 +4,7 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const readline = require('readline');
-const { runGemini, cleanupTempFiles, buildPrompt, DEBUG, MAX_ATTACHMENT_SIZE, TEMP_DIR } = require('./core/engine');
+const { ENGINES, detectEngines, setEngine, runCLI, cleanupTempFiles, buildPrompt, buildContext, DEBUG, MAX_ATTACHMENT_SIZE, TEMP_DIR } = require('./core/engine');
 const { loadSession, appendToSession, clearSession } = require('./core/session');
 
 // --- DISCORD (only if token is configured) ---
@@ -106,13 +106,15 @@ if (DISCORD_TOKEN) {
             const history = await buildDiscordHistory(message);
             const sessionKey = `discord_${message.channel.id}`;
             const session = loadSession(sessionKey);
-            const fullPrompt = buildPrompt({
+            const promptOpts = {
                 senderLabel: message.author.username,
                 userText,
                 fileContext,
                 sessionContext: session.history,
                 history,
-            });
+            };
+            const fullPrompt = buildPrompt(promptOpts);
+            const triageCtx = buildContext(promptOpts);
 
             // Snapshot existing .svm files before the call
             const svmBefore = new Set();
@@ -127,7 +129,11 @@ if (DISCORD_TOKEN) {
             message.channel.sendTyping();
 
             try {
-                const data = await runGemini(fullPrompt, requestId);
+                let planMessage = null;
+                const data = await runCLI(fullPrompt, requestId, async (plan) => {
+                    // Send plan as immediate reply so user sees feedback fast
+                    planMessage = await message.reply(`*${plan}*`);
+                }, triageCtx);
                 clearInterval(typingInterval);
 
                 const responseText = data.response || "No response.";
@@ -149,7 +155,17 @@ if (DISCORD_TOKEN) {
                     finalContent += `\n\n*(Tempo di risposta: ${seconds}s)*`;
                 }
 
-                if (finalContent.length > 2000) {
+                if (planMessage) {
+                    // Edit the plan message with the full response
+                    if (finalContent.length > 2000) {
+                        const chunks = finalContent.match(/[\s\S]{1,2000}/g);
+                        await planMessage.edit(chunks[0]);
+                        for (let i = 1; i < chunks.length - 1; i++) await message.channel.send(chunks[i]);
+                        await message.channel.send({ content: chunks[chunks.length - 1], files: filesToSend });
+                    } else {
+                        await planMessage.edit({ content: finalContent, files: filesToSend });
+                    }
+                } else if (finalContent.length > 2000) {
                     const chunks = finalContent.match(/[\s\S]{1,2000}/g);
                     for (let i = 0; i < chunks.length - 1; i++) await message.reply(chunks[i]);
                     await message.reply({ content: chunks[chunks.length - 1], files: filesToSend });
@@ -205,12 +221,44 @@ const rl = readline.createInterface({
 cleanupTempFiles();
 setInterval(cleanupTempFiles, 3600_000);
 
-console.log(`------------------------------------------------------`);
-console.log(` Race Engineer — CLI${discordClient ? ' + Discord' : ''}${DEBUG ? ' [DEBUG]' : ''}`);
-console.log(` Type your message below, /quit or /exit to leave.`);
-console.log(` /clear to reset conversation history.`);
-if (cliFileContext) console.log(` Files loaded: ${fileArgs.length}`);
-console.log(`------------------------------------------------------`);
+// Detect available engines and let user pick
+const available = detectEngines();
+if (available.length === 0) {
+    console.error(' [ERROR] No AI CLI found. Install one of: codex, gemini, claude');
+    process.exit(1);
+}
+
+function startCLI(engineId) {
+    setEngine(engineId);
+
+    console.log(`------------------------------------------------------`);
+    console.log(` Race Engineer — ${ENGINES[engineId].name}${discordClient ? ' + Discord' : ''}${DEBUG ? ' [DEBUG]' : ''}`);
+    console.log(` Type your message below, /quit or /exit to leave.`);
+    console.log(` /clear to reset conversation history.`);
+    console.log(` /engine to switch AI engine.`);
+    if (cliFileContext) console.log(` Files loaded: ${fileArgs.length}`);
+    console.log(`------------------------------------------------------`);
+
+    prompt();
+}
+
+function pickEngine() {
+    if (available.length === 1) {
+        startCLI(available[0]);
+        return;
+    }
+    console.log('\n Available AI engines:');
+    available.forEach((id, i) => console.log(`  ${i + 1}. ${ENGINES[id].name} (${id})`));
+    rl.question(`\n Pick engine [1-${available.length}]: `, (answer) => {
+        const idx = parseInt(answer, 10) - 1;
+        if (idx >= 0 && idx < available.length) {
+            startCLI(available[idx]);
+        } else {
+            console.log(' Invalid choice, try again.');
+            pickEngine();
+        }
+    });
+}
 
 function prompt() {
     rl.question('> ', async (input) => {
@@ -227,15 +275,20 @@ function prompt() {
             console.log('Conversation history cleared.\n');
             return prompt();
         }
+        if (trimmed === '/engine') {
+            return pickEngine();
+        }
 
         const requestId = crypto.randomBytes(4).toString('hex');
         const session = loadSession('cli');
-        const fullPrompt = buildPrompt({
+        const promptOpts = {
             senderLabel,
             userText: trimmed,
             fileContext: cliFileContext,
             sessionContext: session.history,
-        });
+        };
+        const fullPrompt = buildPrompt(promptOpts);
+        const triageCtx = buildContext(promptOpts);
 
         // Snapshot existing .svm files before the call
         const svmBefore = new Set();
@@ -246,7 +299,9 @@ function prompt() {
         } catch { }
 
         try {
-            const data = await runGemini(fullPrompt, requestId);
+            const data = await runCLI(fullPrompt, requestId, (plan) => {
+                console.log(`\n> ${plan}\n`);
+            }, triageCtx);
             const responseText = data.response || "No response.";
             appendToSession('cli', trimmed, responseText);
 
@@ -274,4 +329,4 @@ function prompt() {
     });
 }
 
-prompt();
+pickEngine();

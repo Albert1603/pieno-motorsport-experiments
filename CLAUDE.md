@@ -6,7 +6,7 @@ Sim racing tools and AI race engineer for Le Mans Ultimate (LMU).
 
 - `race-engineer/` — AI race engineer with Discord and CLI interfaces
   - `index.js` — Single entry point (runs Discord bot + interactive CLI together)
-  - `core/engine.js` — Shared Gemini CLI wrapper, prompt builder
+  - `core/engine.js` — Shared Codex CLI wrapper, prompt builder
   - `core/session.js` — Persistent session history (load/append/clear per channel)
   - `sessions/` — JSON session files on disk (gitignored)
   - `system-prompt.md` — Race engineer system prompt
@@ -38,7 +38,7 @@ cd race-engineer && npm start  # Discord bot + CLI
 
 ## Conventions
 
-- The race engineer calls `gemini -y --output-format json` via stdin (no shell)
+- The race engineer uses a two-phase approach: codex triage (fast, no tools) then codex exec --full-auto (tools) via stdin
 - Python tools output JSON to stdout, errors to stderr
 - .svm files use INI-style format with `[SECTION]`, `key=value//comment`
 - Telemetry data can be large — always use `--max-samples` to downsample
