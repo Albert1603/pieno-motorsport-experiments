@@ -150,7 +150,7 @@ if (DISCORD_TOKEN) {
 
                 // 4. Reply
                 let finalContent = responseText;
-                if (data.stats && data.stats.botLatencyMs) {
+                if (DEBUG && data.stats && data.stats.botLatencyMs) {
                     const seconds = (data.stats.botLatencyMs / 1000).toFixed(1);
                     finalContent += `\n\n*(Tempo di risposta: ${seconds}s)*`;
                 }
@@ -307,7 +307,7 @@ function prompt() {
 
             console.log(`\n${responseText}`);
 
-            if (data.stats && data.stats.botLatencyMs) {
+            if (DEBUG && data.stats && data.stats.botLatencyMs) {
                 const seconds = (data.stats.botLatencyMs / 1000).toFixed(1);
                 console.log(`\n(Response time: ${seconds}s)`);
             }
