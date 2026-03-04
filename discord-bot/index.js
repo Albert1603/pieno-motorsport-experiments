@@ -170,17 +170,14 @@ client.on('messageCreate', async (message) => {
 
             // 3. Look for files to send back
             const filesToSend = [];
-            // Regex to find filenames in the response (e.g., .svm files)
-            const svmMatches = responseText.match(/[\w\s.-]+\.svm/g);
-            if (svmMatches) {
-                const uniqueFiles = [...new Set(svmMatches.map(f => f.trim()))];
-                for (const filename of uniqueFiles) {
-                    const filePath = path.join(TEMP_DIR, filename);
-                    if (fs.existsSync(filePath)) {
-                        filesToSend.push(new AttachmentBuilder(filePath));
+            // Scan temp dir for .svm files created during this request
+            try {
+                for (const f of fs.readdirSync(TEMP_DIR)) {
+                    if (f.endsWith('.svm')) {
+                        filesToSend.push(new AttachmentBuilder(path.join(TEMP_DIR, f)));
                     }
                 }
-            }
+            } catch { }
 
             // 4. Reply
             let finalContent = responseText;

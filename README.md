@@ -1,33 +1,48 @@
 # Pieno Motorsport Experiments
 
-A collection of experiments, tools, and MCP servers for sim racing and motorsport data analysis.
+A collection of tools for sim racing data analysis and AI-assisted race engineering, built for Le Mans Ultimate (LMU).
 
 ## Repository Structure
 
-- `discord-bot/`: A Node.js based Discord bot that interacts with the **Gemini CLI** to act as a Virtual Race Engineer.
-- `mcp-servers/`
-  - `motec/`: Model Context Protocol (MCP) server for MoTeC telemetry analysis.
-  - `lmu-setup/`: MCP server for Le Mans Ultimate (LMU) setup file parsing and manipulation.
-- `setup-samples/`: Sample `.svm` setup files for LMU.
-- `telemetry-samples/`: Sample `.ld` and `.ldx` MoTeC telemetry files.
-- `tools/`: Windows batch scripts and utility files for installation and launching.
+- `discord-bot/` — A Node.js Discord bot that uses the **Gemini CLI** as a virtual race engineer.
+- `tools/` — Python CLI scripts and Windows utilities.
+  - `motec.py` — MoTeC .ld telemetry reader (metadata, channels, data with downsampling).
+  - `lmu_setup.py` — LMU .svm setup file parser and writer.
+  - `LMU-Setup-Loader.bat` — Windows one-click installer for .svm setup files.
+  - `LMU-Telemetry-Installer.bat` — Windows installer for DAMPlugin + MoTeC i2 Pro.
+- `telemetry-samples/` — Sample .ld and .ldx MoTeC telemetry files.
+- `setup-samples/` — Sample .svm setup files for LMU.
 
-## Installation and Setup
+## Setup
+
+### Python Tools
+
+```bash
+pip install -r tools/requirements.txt
+```
+
+Usage:
+```bash
+python tools/motec.py metadata <file.ld>
+python tools/motec.py channels <file.ld>
+python tools/motec.py data <file.ld> <channel_name> [--max-samples 1000]
+
+python tools/lmu_setup.py read <file.svm>
+python tools/lmu_setup.py write <file.svm> '<json_data>'
+```
 
 ### Discord Bot
+
+**Prerequisites:**
+- Node.js 18+
+- The [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed and available in your `PATH`
+- A `GOOGLE_API_KEY` environment variable (or Gemini CLI configured with credentials)
+
+**Installation:**
 1. `cd discord-bot`
 2. `npm install`
-3. Copy `.env.example` to `.env` and add your `DISCORD_TOKEN`.
-4. Start with `node index.js` or `npm start`.
-
-### Prerequisites
-The bot requires the **Gemini CLI** to be installed in your environment. It uses the CLI's tool-execution capabilities to analyze telemetry and setup files.
-
-### MCP Servers
-To use the MCP servers with your favorite LLM interface (like Gemini CLI or Claude Desktop):
-1. Navigate to the server directory (e.g., `mcp-servers/motec`).
-2. Run `npm install`.
-3. Configure your client to point to the server's `index.js`.
+3. Copy `.env.example` to `.env` and add your `DISCORD_TOKEN` and `GOOGLE_API_KEY`.
+4. Start with `npm start`.
 
 ## Security
 
