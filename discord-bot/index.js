@@ -14,7 +14,7 @@ const GEMINI_TIMEOUT = 300_000; // 5 minutes
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
 
 // Load system prompt from file
-const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, 'system-prompt.txt'), 'utf-8');
+const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, 'system-prompt.md'), 'utf-8');
 
 const client = new Client({
     intents: [
