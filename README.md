@@ -52,10 +52,3 @@ npm start
 # With telemetry/setup files preloaded for the CLI:
 node index.js ../telemetry-samples/*.ld
 ```
-
-## Security
-
-This repository uses environment variables for sensitive credentials.
-- **NEVER** commit your `.env` files to GitHub.
-- A `.gitignore` file is provided to help prevent accidental commits of secrets.
-- If you find hardcoded tokens, rotate them immediately!
